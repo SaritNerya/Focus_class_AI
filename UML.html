@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusClass — תרשים UML של המערכת</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0a2340;
+    --bg-deep: #071a30;
+    --panel: #0d2c4f;
+    --panel-line: rgba(234, 243, 251, 0.14);
+    --grid: rgba(234, 243, 251, 0.045);
+    --ink: #eaf3fb;
+    --ink-dim: #9ab3cc;
+    --amber: #e3a53d;
+    --cyan: #74d3e8;
+    --rose: #e08a8a;
+    --mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "Courier New", monospace;
+    --sans: "Assistant", "Segoe UI", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--bg-deep);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+  }
+
+  body {
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-color: var(--bg-deep);
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 80px; }
+
+  header.hero {
+    padding: 64px 24px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--panel-line);
+    margin-bottom: 48px;
+    background: radial-gradient(ellipse at top, rgba(116, 211, 232, 0.08), transparent 60%);
+  }
+
+  .stamp {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--amber);
+    border: 1px solid rgba(227, 165, 61, 0.5);
+    padding: 5px 14px;
+    border-radius: 3px;
+    margin-bottom: 22px;
+    direction: ltr;
+  }
+
+  h1 {
+    font-size: clamp(30px, 4.2vw, 46px);
+    margin: 0 0 12px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .hero p.sub {
+    color: var(--ink-dim);
+    font-size: 17px;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .hero .filepath {
+    margin-top: 22px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--cyan);
+    direction: ltr;
+    display: inline-block;
+  }
+
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 56px;
+  }
+
+  nav.toc a {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    text-decoration: none;
+    border: 1px solid var(--panel-line);
+    padding: 7px 14px;
+    border-radius: 3px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  nav.toc a:hover { color: var(--cyan); border-color: var(--cyan); }
+
+  section.block { margin-bottom: 64px; }
+
+  .block-head { margin-bottom: 20px; }
+
+  .block-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--amber);
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-size: 24px;
+    margin: 0 0 8px;
+    font-weight: 700;
+  }
+
+  .block-head p {
+    color: var(--ink-dim);
+    font-size: 15px;
+    max-width: 760px;
+    margin: 0;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 6px;
+    padding: 24px;
+    overflow-x: auto;
+  }
+
+  .diagram { direction: ltr; text-align: center; min-width: 560px; }
+  .diagram svg { max-width: none !important; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 6px;
+    padding: 16px 22px;
+    margin-bottom: 56px;
+    direction: ltr;
+  }
+  .legend span { white-space: nowrap; }
+  .legend b { color: var(--ink); }
+
+  .callout {
+    border-right: 3px solid var(--amber);
+    background: rgba(227, 165, 61, 0.07);
+    padding: 14px 18px;
+    border-radius: 4px;
+    margin-top: 18px;
+    font-size: 14.5px;
+    color: var(--ink-dim);
+  }
+  .callout b { color: var(--ink); }
+  .callout code { color: var(--amber); }
+
+  code {
+    font-family: var(--mono);
+    background: rgba(255,255,255,0.06);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    direction: ltr;
+    display: inline-block;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--ink-dim);
+    font-size: 13px;
+    font-family: var(--mono);
+    padding-top: 24px;
+    border-top: 1px solid var(--panel-line);
+  }
+
+  @media (max-width: 720px) {
+    header.hero { padding: 44px 16px 30px; }
+    .panel { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <span class="stamp">SYSTEM ARCHITECTURE — REV. 2.0</span>
+  <h1>FocusClass — תרשים UML של המערכת</h1>
+  <p class="sub">מיפוי מדויק של כל המחלקות, הממשקים, תבניות העיצוב וזרימת הנתונים — צד לקוח וצד שרת — כפי שהם בפועל בקוד.</p>
+  <span class="filepath">Focus_class/client + Focus_class/server</span>
+</header>
+
+<div class="wrap">
+
+  <nav class="toc">
+    <a href="#arch">00 · ארכיטקטורת המערכת</a>
+    <a href="#vision">01 · שכבת ה-Vision</a>
+    <a href="#scoring">02 · מנוע הניקוד (Decorator)</a>
+    <a href="#infra">03 · תשתית הלקוח</a>
+    <a href="#api">04 · API ואבטחת שרת</a>
+    <a href="#repo">05 · Repository (Decorator)</a>
+    <a href="#seq">06 · רצף שליחת ציון</a>
+  </nav>
+
+  <div class="legend">
+    <span>▷ <b>solid triangle</b> = inheritance / implements</span>
+    <span>◇ <b>filled diamond</b> = composition (owns)</span>
+    <span>○ <b>open diamond</b> = aggregation (wraps/holds ref)</span>
+    <span>┈▷ <b>dashed arrow</b> = dependency / uses</span>
+    <span>&lt;&lt;interface&gt;&gt; / &lt;&lt;abstract&gt;&gt; = חוזה מופשט</span>
+  </div>
+
+  <!-- 00 ARCHITECTURE -->
+  <section class="block" id="arch">
+    <div class="block-head">
+      <span class="block-num">00 / ARCHITECTURE</span>
+      <h2>ארכיטקטורת המערכת ברמת-על</h2>
+      <p>שני תהליכים עצמאיים לחלוטין, המתקשרים אך ורק דרך HTTP מאובטח. הלקוח רץ אצל כל תלמידה; השרת רץ פעם אחת אצל המרצה.</p>
+    </div>
+    <div class="panel">
+      <div class="diagram">
+        <pre class="mermaid">
+flowchart TB
+    subgraph CLIENT["🎥 CLIENT PROCESS — client/  (רץ אצל כל תלמידה)"]
+        direction TB
+        C1["vision/<br/>FaceMeshDetector, FeatureExtractor<br/>EAR · MAR · HeadPose · Movement"]
+        C2["core/<br/>CameraCapture · Calibrator<br/>VirtualCamera (Strategy)"]
+        C3["scoring/<br/>FocusEvaluator Decorator Chain<br/>ScoreEngine"]
+        C4["networking/<br/>ScoreApiClient (Bearer token)"]
+        C5["ui/ + session_logging/<br/>OverlayRenderer · DataLogger"]
+        C6["app.py<br/>FocusSessionApp (composition root)"]
+        C6 --> C1 & C2 & C3 & C4 & C5
+    end
+
+    subgraph SERVER["🖥️ SERVER PROCESS — server/  (רץ אצל המרצה)"]
+        direction TB
+        S1["api/v1/<br/>scores router · dashboard router"]
+        S2["core/<br/>require_api_key · require_dashboard_auth<br/>RateLimit · SecurityHeaders"]
+        S3["domain/<br/>Pydantic Schemas (ולידציה קפדנית)"]
+        S4["services/<br/>ScoreService"]
+        S5["repositories/<br/>InMemory ⟶ Persisting (Decorator)"]
+        S6[("db/<br/>SQLite · ScoreLog")]
+        S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    end
+
+    BROWSER["🖥️ דפדפן המרצה<br/>Dashboard (Basic Auth)"]
+
+    C4 -- "POST /api/v1/scores<br/>Authorization: Bearer API_KEY<br/>(HTTP/JSON)" --> S1
+    BROWSER -- "GET /api/v1/scores + GET /<br/>HTTP Basic Auth" --> S1
+
+    classDef client fill:#0d2c4f,stroke:#74d3e8,stroke-width:1px,color:#eaf3fb;
+    classDef server fill:#0d2c4f,stroke:#e3a53d,stroke-width:1px,color:#eaf3fb;
+    classDef browser fill:#122f52,stroke:#e08a8a,stroke-width:1px,color:#eaf3fb;
+    class C1,C2,C3,C4,C5,C6 client;
+    class S1,S2,S3,S4,S5,S6 server;
+    class BROWSER browser;
+        </pre>
+      </div>
+      <div class="callout">
+        <b>הפרדה מלאה:</b> ה-client לא מייבא שום דבר מ-<code>server/</code> ולהפך. הממשק היחיד ביניהם הוא חוזה ה-HTTP המתועד ב-<code>server/domain/schemas.py</code>.
+      </div>
+    </div>
+  </section>
+
+  <!-- 01 VISION -->
+  <section class="block" id="vision">
+    <div class="block-head">
+      <span class="block-num">01 / CLIENT</span>
+      <h2>שכבת ה-Vision והכיול</h2>
+      <p>המרה של פריים וידאו גולמי לתכונות פנים מספריות, ולאחר מכן לתכונות "מכוילות" ביחס לבסיס האישי של התלמידה (Facade + מקור-אמת יחיד לכיול).</p>
+    </div>
+    <div class="panel">
+      <div class="diagram">
+        <pre class="mermaid">
+classDiagram
+    class Landmark {
+        &lt;&lt;Protocol&gt;&gt;
+        +x: float
+        +y: float
+    }
+
+    class FaceMeshDetector {
+        -_face_mesh
+        -_last_raw_landmarks
+        +process(frame_rgb) List~Landmark~
+        +draw(frame, color)
+        +close()
+    }
+
+    class FrameFeatures {
+        &lt;&lt;dataclass, frozen&gt;&gt;
+        +avg_ear: float
+        +mar: float
+        +pitch: float
+        +yaw: float
+        +roll: float
+        +nose_pos: Point2D
+    }
+
+    class FaceFeatureExtractor {
+        +extract(landmarks, img_w, img_h) FrameFeatures
+    }
+
+    class VisionMath {
+        &lt;&lt;module functions&gt;&gt;
+        +calculate_ear(landmarks, eye_idx) float
+        +calculate_mar(landmarks, mouth_idx) float
+        +calculate_head_pose(landmarks, w, h) HeadPose
+        +calculate_movement_distance(cur, prev) float
+    }
+
+    class CalibrationConfig {
+        &lt;&lt;dataclass&gt;&gt;
+        +duration_seconds: float = 3.0
+        +ear_std_dev_multiplier: float = 2.0
+        +ear_threshold_min/max: float
+        +angle_smoothing_alpha: float = 0.4
+    }
+
+    class Calibrator {
+        -_samples: List
+        -_config: CalibrationConfig
+        +is_calibrated: bool
+        +baseline_ear/yaw/roll: float
+        +ear_threshold: float
+        +remaining_seconds() float
+        +add_sample(features, dt_seconds)
+        +calibrate_frame(features) CalibratedFeatures
+    }
+
+    class CalibratedFeatures {
+        &lt;&lt;dataclass, frozen&gt;&gt;
+        +avg_ear: float
+        +delta_ear: float
+        +adjusted_yaw: float
+        +adjusted_roll: float
+        +tilt_magnitude: float
+        +mar: float
+        +nose_pos: Point2D
+        +ear_threshold: float
+    }
+
+    FaceMeshDetector ..> Landmark : produces
+    FaceFeatureExtractor ..> Landmark : reads
+    FaceFeatureExtractor ..> VisionMath : delegates math to
+    FaceFeatureExtractor --> FrameFeatures : creates
+    Calibrator o-- CalibrationConfig : configured by
+    Calibrator ..> FrameFeatures : consumes
+    Calibrator --> CalibratedFeatures : creates
+        </pre>
+      </div>
+      <div class="callout">
+        <b>תיקון ארכיטקטוני:</b> בקוד המקורי היה כיול כפול וסותר (ב-<code>main.py</code> וגם בתוך <code>scoring.py</code>). כאן <code>Calibrator</code> הוא מקור האמת היחיד — כל שאר המערכת מקבלת <code>CalibratedFeatures</code> מוכנות.
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 SCORING / DECORATOR -->
+  <section class="block" id="scoring">
+    <div class="block-head">
+      <span class="block-num">02 / CLIENT — DESIGN PATTERN: DECORATOR</span>
+      <h2>מנוע הניקוד — שרשרת ה-Decorator</h2>
+      <p>הליבה הארכיטקטונית של המערכת. כל "עונש" הוא מחלקה שעוטפת <code>FocusEvaluator</code> קיים ומוסיפה שכבת התנהגות — הוספת עונש חדש דורשת מחלקה אחת בלבד, ללא שינוי בקוד קיים (Open/Closed).</p>
+    </div>
+    <div class="panel">
+      <div class="diagram">
+        <pre class="mermaid">
+classDiagram
+    class Verdict {
+        &lt;&lt;dataclass, frozen&gt;&gt;
+        +target_ceiling: float = 100.0
+        +reasons: Tuple~str~
+        +is_violating: bool
+        +is_severe: bool
+    }
+
+    class FocusEvaluator {
+        &lt;&lt;abstract&gt;&gt;
+        +evaluate(features) Verdict*
+        +reset()
+    }
+
+    class BaseEvaluator {
+        "Concrete Component — 100 תמיד"
+        +evaluate(features) Verdict
+    }
+
+    class PenaltyDecorator {
+        &lt;&lt;abstract&gt;&gt;
+        #_wrapped: FocusEvaluator
+        +evaluate(features) Verdict
+        #_evaluate_self(features) Verdict*
+        #_reset_self()
+    }
+
+    class MovementPenaltyDecorator {
+        -_movement_frames: float
+        -_prev_nose_pos
+        +seconds_moving() float
+        #_evaluate_self(features) Verdict
+    }
+
+    class EyesClosedPenaltyDecorator {
+        -_closed_eyes_frames: int
+        #_evaluate_self(features) Verdict
+    }
+
+    class TiltPenaltyDecorator {
+        -_distracted_frames: int
+        #_evaluate_self(features) Verdict
+    }
+
+    class YawnPenaltyDecorator {
+        -_yawn_frames: int
+        #_evaluate_self(features) Verdict
+    }
+
+    class ScoringConfig {
+        &lt;&lt;dataclass, frozen&gt;&gt;
+        +movement_threshold_px +frames_blink_threshold
+        +tilt_threshold_deg +mar_threshold
+        +severe_*_seconds +slow/normal_recovery_rate
+        "כל הספים — Dependency Injection"
+    }
+
+    class ScoreEngine {
+        -_evaluator: FocusEvaluator
+        -_config: ScoringConfig
+        +score: float
+        -_severe_recovery_active: bool
+        +update(features) ScoreResult
+        +reset()
+    }
+
+    class ScoreResult {
+        &lt;&lt;dataclass, frozen&gt;&gt;
+        +score: float
+        +reasons: Tuple~str~
+    }
+
+    FocusEvaluator <|.. BaseEvaluator
+    FocusEvaluator <|.. PenaltyDecorator
+    PenaltyDecorator <|-- MovementPenaltyDecorator
+    PenaltyDecorator <|-- EyesClosedPenaltyDecorator
+    PenaltyDecorator <|-- TiltPenaltyDecorator
+    PenaltyDecorator <|-- YawnPenaltyDecorator
+    PenaltyDecorator o-- FocusEvaluator : wraps
+    PenaltyDecorator ..> Verdict : returns
+    ScoreEngine o-- FocusEvaluator : drives
+    ScoreEngine --> ScoringConfig : configured by
+    ScoreEngine ..> ScoreResult : returns
+        </pre>
+      </div>
+      <div class="callout">
+        <b>סדר העטיפה בפועל</b> (<code>evaluator_factory.build_default_focus_evaluator</code>):<br>
+        <code>BaseEvaluator → MovementPenaltyDecorator → EyesClosedPenaltyDecorator → TiltPenaltyDecorator → YawnPenaltyDecorator</code><br>
+        כל שכבה קוראת ל-<code>_wrapped.evaluate()</code>, ואז ממזגת: <code>target_ceiling = min(...)</code>, <code>reasons = inner + own</code>, <code>is_violating = OR</code>.
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 CLIENT INFRA -->
+  <section class="block" id="infra">
+    <div class="block-head">
+      <span class="block-num">03 / CLIENT — DESIGN PATTERNS: STRATEGY + NULL OBJECT + COMPOSITION ROOT</span>
+      <h2>תשתית הלקוח והרכבה (Composition Root)</h2>
+      <p>ניהול משאבים (מצלמה, מצלמה וירטואלית, רשת, לוגר) והאורקסטרטור <code>FocusSessionApp</code> שמרכיב הכל יחד.</p>
+    </div>
+    <div class="panel">
+      <div class="diagram">
+        <pre class="mermaid">
+classDiagram
+    class VirtualCamera {
+        &lt;&lt;abstract&gt;&gt;
+        +send(frame_rgb)*
+        +close()*
+        +is_active bool*
+        +device_name str
+    }
+    class NullVirtualCamera {
+        "Null Object — כשאין דרייבר תואם"
+        +send(frame_rgb)
+        +is_active bool = False
+    }
+    class PyVirtualCamAdapter {
+        -_camera
+        +send(frame_rgb)
+        +is_active bool = True
+    }
+    class create_virtual_camera {
+        &lt;&lt;factory function&gt;&gt;
+        "Strategy: מנסה unitycapture ⟶ obs ⟶ Null"
+    }
+
+    class CameraCapture {
+        -_settings: CameraSettings
+        -_cap
+        +open() Tuple~w,h~
+        +read() Tuple~bool, frame~
+        +release()
+    }
+
+    class ScoreApiClient {
+        -_endpoint: str
+        -_session: requests.Session
+        +submit_score(submission)
+        "Authorization: Bearer API_KEY"
+    }
+
+    class DataLogger {
+        -_csv_path: Path
+        +is_recording: bool
+        +current_label: int
+        +toggle_recording()
+        +set_label(label)
+        +log_data(name, score, deltas...)
+    }
+
+    class InputHandler {
+        -_bindings: Dict
+        +bind(key, callback)
+        +poll(wait_ms) bool
+    }
+
+    class FocusSessionApp {
+        "Composition Root"
+        -_camera: CameraCapture
+        -_calibrator: Calibrator
+        -_score_engine: ScoreEngine
+        -_api_client: ScoreApiClient
+        -_data_logger: DataLogger
+        -_input_handler: InputHandler
+        +run()
+        -_process_face(frame, detector, landmarks, dt, now)
+        -_send_score_async(score, reasons)
+    }
+
+    VirtualCamera <|.. NullVirtualCamera
+    VirtualCamera <|.. PyVirtualCamAdapter
+    create_virtual_camera ..> VirtualCamera : returns
+
+    FocusSessionApp *-- CameraCapture
+    FocusSessionApp *-- ScoreApiClient
+    FocusSessionApp *-- DataLogger
+    FocusSessionApp *-- InputHandler
+    FocusSessionApp o-- VirtualCamera : created via factory
+    FocusSessionApp ..> create_virtual_camera : calls
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 SERVER API + SECURITY -->
+  <section class="block" id="api">
+    <div class="block-head">
+      <span class="block-num">04 / SERVER — API · SECURITY · DOMAIN VALIDATION</span>
+      <h2>שכבת ה-API והאבטחה</h2>
+      <p>ראוטרים דקים, מוגנים ב-Dependency Injection של FastAPI; כל קלט חיצוני עובר ולידציית Pydantic קפדנית לפני שהוא נוגע בלוגיקה עסקית כלשהי.</p>
+    </div>
+    <div class="panel">
+      <div class="diagram">
+        <pre class="mermaid">
+classDiagram
+    class ServerSettings {
+        &lt;&lt;Pydantic BaseSettings&gt;&gt;
+        +api_key: str
+        +dashboard_username: str
+        +dashboard_password_hash: str
+        +cors_origins: List~str~
+        +database_url: str
+        +student_timeout_seconds: float
+        +rate_limit_requests_per_minute: int
+    }
+
+    class require_api_key {
+        &lt;&lt;dependency function&gt;&gt;
+        "secrets.compare_digest(token, api_key)"
+        "→ 401 אם שגוי"
+    }
+
+    class require_dashboard_auth {
+        &lt;&lt;dependency function&gt;&gt;
+        "HTTPBasic + bcrypt verify"
+        "→ 401 אם שגוי"
+    }
+
+    class RateLimitMiddleware {
+        -_hits: Dict~ip, deque~
+        -_limit: int
+        +dispatch(request, call_next)
+    }
+
+    class SecurityHeadersMiddleware {
+        +dispatch(request, call_next)
+        "X-Frame-Options · X-Content-Type-Options"
+    }
+
+    class ScoreSubmission_Schema["ScoreSubmission «Pydantic»"] {
+        +student_id: str  ~allowlist regex~
+        +focus_score: int  ~0..100~
+        +reasons: List~str~  ~max 10~
+        +validate student_id()
+        +validate reasons()
+    }
+
+    class ScoreSubmissionResponse {
+        +status: str
+        +message: str | None
+    }
+
+    class DashboardStudent {
+        +score: int
+        +last_seen: float
+    }
+
+    class ScoresRouter["POST/GET /api/v1/scores"] {
+        +submit_score(submission) ScoreSubmissionResponse
+        +get_scores() Dict~str,DashboardStudent~
+    }
+
+    class DashboardRouter["GET /"] {
+        +dashboard() HTMLResponse
+    }
+
+    ScoresRouter ..> require_api_key : Depends (POST)
+    ScoresRouter ..> require_dashboard_auth : Depends (GET)
+    DashboardRouter ..> require_dashboard_auth : Depends
+    ScoresRouter ..> ScoreSubmission_Schema : validates body
+    ScoresRouter ..> ScoreSubmissionResponse : returns
+    ScoresRouter ..> DashboardStudent : returns
+    require_api_key ..> ServerSettings : reads api_key
+    require_dashboard_auth ..> ServerSettings : reads credentials
+        </pre>
+      </div>
+      <div class="callout">
+        <b>הגנה בשכבות:</b> <code>RateLimitMiddleware</code> ו-<code>SecurityHeadersMiddleware</code> עוטפים את כל האפליקציה (ראו תרשים 00), לפני שבקשה בכלל מגיעה לראוטר או ל-Dependency של האימות.
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 REPOSITORY DECORATOR -->
+  <section class="block" id="repo">
+    <div class="block-head">
+      <span class="block-num">05 / SERVER — DESIGN PATTERN: DECORATOR (שוב) + FACTORY</span>
+      <h2>שכבת הנתונים — Repository מעוטר בהתמדה</h2>
+      <p>אותה שפת עיצוב כמו בלקוח: <code>PersistingStudentRepository</code> עוטף <code>InMemoryStudentRepository</code> ומוסיף עליו כתיבה ל-SQLite, בלי לשנות אף צרכן קיים של <code>IStudentRepository</code>.</p>
+    </div>
+    <div class="panel">
+      <div class="diagram">
+        <pre class="mermaid">
+classDiagram
+    class StudentState {
+        &lt;&lt;dataclass, frozen&gt;&gt;
+        +score: int
+        +reasons: List~str~
+        +last_seen: float
+    }
+
+    class IStudentRepository {
+        &lt;&lt;interface&gt;&gt;
+        +upsert(name, score, reasons)*
+        +get_active(timeout_seconds) Dict*
+    }
+
+    class InMemoryStudentRepository {
+        -_students: Dict~str, StudentState~
+        -_lock: threading.Lock
+        +upsert(name, score, reasons)
+        +get_active(timeout_seconds) Dict
+    }
+
+    class PersistingStudentRepository {
+        -_wrapped: IStudentRepository
+        -_session_factory: Callable
+        +upsert(name, score, reasons)
+        +get_active(timeout_seconds) Dict
+        -_persist(name, score, reasons)
+    }
+
+    class ScoreLog {
+        &lt;&lt;SQLAlchemy ORM Entity&gt;&gt;
+        +id: int
+        +student_name: str
+        +score: int
+        +reasons: str
+        +created_at: float
+    }
+
+    class ScoreService {
+        -_repository: IStudentRepository
+        -_student_timeout_seconds: float
+        +submit_score(submission)
+        +get_dashboard_state() Dict~str,DashboardStudent~
+    }
+
+    class create_app["server.app.create_app()"] {
+        &lt;&lt;Factory&gt;&gt;
+        "מרכיבה: InMemory → Persisting → ScoreService"
+    }
+
+    IStudentRepository <|.. InMemoryStudentRepository
+    IStudentRepository <|.. PersistingStudentRepository
+    PersistingStudentRepository o-- IStudentRepository : wraps
+    PersistingStudentRepository ..> ScoreLog : INSERT (best-effort)
+    InMemoryStudentRepository ..> StudentState : holds
+    ScoreService o-- IStudentRepository : depends on interface
+    create_app ..> InMemoryStudentRepository : creates
+    create_app ..> PersistingStudentRepository : wraps with
+    create_app ..> ScoreService : injects into
+        </pre>
+      </div>
+      <div class="callout">
+        <b>למה זה חשוב:</b> ה-cache בזיכרון עונה לדשבורד תוך מיקרושניות (ללא פגיעה ב-DB בכל poll), בעוד ה-DB משמש רק כהיסטוריה/ביקורת ברקע — כתיבה שנכשלת ל-DB לא מפילה את הבקשה החיה.
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 SEQUENCE -->
+  <section class="block" id="seq">
+    <div class="block-head">
+      <span class="block-num">06 / END-TO-END</span>
+      <h2>רצף מלא: מפריים וידאו ועד לדשבורד המרצה</h2>
+      <p>תרשים רצף (Sequence Diagram) שממחיש איך כל השכבות שלמעלה משתלבות יחד עבור עדכון ציון אחד.</p>
+    </div>
+    <div class="panel">
+      <div class="diagram">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Cam as מצלמה
+    participant App as FocusSessionApp
+    participant Vis as FaceMeshDetector/Extractor
+    participant Cal as Calibrator
+    participant Eval as Decorator Chain
+    participant SE as ScoreEngine
+    participant API as ScoreApiClient
+    participant Rt as scores router
+    participant Auth as require_api_key
+    participant Svc as ScoreService
+    participant Repo as PersistingRepo
+    participant Mem as InMemoryRepo
+    participant DB as SQLite
+    participant Dash as דשבורד המרצה
+
+    Cam->>App: פריים RGB
+    App->>Vis: process(frame) + extract()
+    Vis-->>App: FrameFeatures
+    App->>Cal: calibrate_frame(features)
+    Cal-->>App: CalibratedFeatures
+    App->>Eval: evaluate(calibrated)
+    Eval-->>App: Verdict(target_ceiling, reasons)
+    App->>SE: update(calibrated)
+    SE-->>App: ScoreResult(score, reasons)
+    App->>API: submit_score(...)  [thread נפרד]
+    API->>Rt: POST /api/v1/scores<br/>Authorization: Bearer •••
+    Rt->>Auth: require_api_key(header)
+    Auth-->>Rt: 200 OK  (או 401)
+    Rt->>Svc: submit_score(schema מאומת)
+    Svc->>Repo: upsert(name, score, reasons)
+    Repo->>Mem: upsert(...)  「מיידי」
+    Repo->>DB: INSERT ScoreLog  「best-effort」
+    Rt-->>API: 200 {status: "success"}
+
+    Note over Dash,DB: כל שנייה — polling עצמאי מהדשבורד
+    Dash->>Rt: GET /api/v1/scores  (Basic Auth)
+    Rt->>Svc: get_dashboard_state()
+    Svc->>Repo: get_active(timeout)
+    Repo->>Mem: get_active(timeout)
+    Mem-->>Dash: {student: {score, last_seen}}
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    FocusClass · client/ + server/ · Architecture Reference v2.0
+  </footer>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "base",
+    themeVariables: {
+      background: "#0d2c4f",
+      primaryColor: "#0d2c4f",
+      primaryBorderColor: "#74d3e8",
+      primaryTextColor: "#eaf3fb",
+      lineColor: "#74d3e8",
+      secondaryColor: "#122f52",
+      tertiaryColor: "#0a2340",
+      edgeLabelBackground: "#0d2c4f",
+      fontFamily: "IBM Plex Mono, JetBrains Mono, ui-monospace, monospace",
+      fontSize: "13px",
+      noteBkgColor: "#173a5e",
+      noteTextColor: "#eaf3fb",
+      noteBorderColor: "#e3a53d",
+      actorBkg: "#122f52",
+      actorBorder: "#74d3e8",
+      actorTextColor: "#eaf3fb",
+      signalColor: "#9ab3cc",
+      signalTextColor: "#eaf3fb",
+      labelBoxBkgColor: "#122f52",
+      labelBoxBorderColor: "#74d3e8",
+      labelTextColor: "#eaf3fb",
+      classText: "#eaf3fb"
+    },
+    flowchart: { curve: "basis", htmlLabels: true },
+    securityLevel: "loose"
+  });
+</script>
+
+</body>
+</html>
