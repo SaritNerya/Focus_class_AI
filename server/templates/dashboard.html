@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusClass · Classroom Concentration HUD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800&family=Inter:wght@400;600;800;900&family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg-dark: #030611;
+            --hud-panel-bg: rgba(6, 17, 40, 0.7);
+            --hud-border: rgba(0, 243, 255, 0.18);
+            --hud-glow: 0 0 15px rgba(0, 243, 255, 0.15);
+            
+            --ink-bright: #E0F2FE;
+            --ink-dim: #38BDF8;
+            --ink-muted: #0284C7;
+            
+            /* סכמת צבעי פוספור-ניאון מתוך תמונת ה-HUD */
+            --cyan-glow: #00F3FF;
+            --high-glow-color: rgba(0, 243, 255, 0.5);
+            
+            --gold-glow: #FFB800;
+            --mid-glow-color: rgba(255, 184, 0, 0.5);
+            
+            --magenta-glow: #FF007A;
+            --low-glow-color: rgba(255, 0, 122, 0.5);
+        }
+
+        *{
+            box-sizing: border-box;
+            font-family: 'Heebo', sans-serif;
+        }
+
+        body{
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink-bright);
+            background-color: var(--bg-dark);
+            overflow-x: hidden;
+        }
+
+        /* רשת מכ"ם טקטית ברקע */
+        .hud-grid{
+            position: fixed;
+            inset: 0;
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(0, 243, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 243, 255, 0.02) 1px, transparent 1px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        header{
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(3, 6, 17, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1.5px solid var(--hud-border);
+            padding: 14px 32px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+        }
+        
+        header .wrap{
+            max-width: 1350px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon{
+            font-size: 24px;
+            filter: drop-shadow(0 0 8px var(--cyan-glow));
+        }
+
+        .brand h1{
+            font-family: 'Rubik', sans-serif;
+            font-weight: 900;
+            font-size: 22px;
+            margin: 0;
+            letter-spacing: 0.05em;
+            color: var(--ink-bright);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.35);
+        }
+
+        .brand h1 span{
+            font-family: 'Heebo', sans-serif;
+            font-weight: 500;
+            font-size: 11px;
+            color: var(--ink-dim);
+            margin-inline-start: 10px;
+            background: rgba(0, 243, 255, 0.05);
+            border: 1.5px solid var(--hud-border);
+            padding: 2px 8px;
+            border-radius: 6px;
+            text-shadow: none;
+        }
+
+        .live-status{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--ink-dim);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .live-dot{
+            position: relative;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--cyan-glow);
+            box-shadow: 0 0 8px var(--cyan-glow);
+        }
+
+        .live-dot::after{
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1.5px solid var(--cyan-glow);
+            animation: pulse-ring 2s ease-out infinite;
+        }
+
+        @keyframes pulse-ring{
+            0% { transform: scale(0.6); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        main{
+            position: relative;
+            z-index: 1;
+            max-width: 1350px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* ---- פאנל הבקרה העליון (מבנה חצוי) ---- */
+        .telemetry-layout{
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .telemetry-layout { grid-template-columns: 1fr; }
+        }
+
+        /* פאנל האק"ג והציון המרכזי */
+        .pulse-hero{
+            background: var(--hud-panel-bg);
+            border: 1.5px solid var(--hud-border);
+            border-radius: 20px;
+            padding: 24px 32px;
+            box-shadow: var(--hud-glow);
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        /* קישוטי פינות טקטיים לפאנל */
+        .pulse-hero::before, .hud-card::before, .student-card::before {
+            content: '';
+            position: absolute;
+            top: -1.5px; left: -1px;
+            width: 12px; height: 12px;
+            border-top: 3px solid var(--hero-color, var(--cyan-glow));
+            border-left: 3px solid var(--hero-color, var(--cyan-glow));
+            border-top-left-radius: 6px;
+            transition: border-color 0.4s ease;
+        }
+
+        .pulse-hero::after, .hud-card::after, .student-card::after {
+            content: '';
+            position: absolute;
+            bottom: -1.5px; right: -1px;
+            width: 12px; height: 12px;
+            border-bottom: 3px solid var(--hero-color, var(--cyan-glow));
+            border-right: 3px solid var(--hero-color, var(--cyan-glow));
+            border-bottom-right-radius: 6px;
+            transition: border-color 0.4s ease;
+        }
+
+        .pulse-hero-info{
+            min-width: 220px;
+            text-align: center;
+        }
+
+        .pulse-eyebrow{
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ink-dim);
+            letter-spacing: 0.1em;
+            margin: 0 0 8px;
+            text-transform: uppercase;
+        }
+
+        /* חוגה מעגלית הולוגרפית לממוצע הריכוז */
+        .hud-average-dial {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: conic-gradient(var(--hero-color, var(--cyan-glow)) calc(var(--avg-pct, 0)*1%), rgba(255, 255, 255, 0.03) 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            transition: background 0.5s ease;
+            box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.05), 0 0 20px var(--hero-glow, rgba(0, 243, 255, 0.1));
+        }
+
+        .hud-average-dial-inner {
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            background: #040816;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgba(0, 243, 255, 0.15);
+        }
+
+        #class-average{
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 42px;
+            line-height: 1;
+            color: var(--hero-color, var(--cyan-glow));
+            transition: color 0.5s ease;
+        }
+
+        .hud-average-dial-inner span {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ink-dim);
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        #class-status{
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--hero-color, var(--cyan-glow));
+            transition: color 0.5s ease;
+        }
+
+        /* המוניטור - עיצוב שחור אבסידיאן עם רשת בוהקת */
+        .wave-box{
+            flex: 1;
+            min-width: 300px;
+            height: 150px;
+            border-radius: 14px;
+            background: #02040A; /* שחור מוחלט */
+            border: 1.5px solid rgba(0, 243, 255, 0.15);
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 25px rgba(0, 243, 255, 0.15);
+        }
+
+        #ecg-canvas{
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* פאנל יומן התרעות כיתתי */
+        .hud-card {
+            background: var(--hud-panel-bg);
+            border: 1.5px solid var(--hud-border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--hud-glow);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-card-header {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--ink-dim);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+            padding-bottom: 6px;
+        }
+
+        .log-container {
+            flex: 1;
+            font-family: 'Inter', monospace;
+            font-size: 11px;
+            color: #38BDF8;
+            overflow-y: hidden;
+            line-height: 1.5;
+        }
+
+        .log-row {
+            margin-bottom: 4px;
+            white-space: nowrap;
+        }
+
+        /* ---- כרטיסיות מידע מהיר ---- */
+        .summary-grid{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .summary-card{
+            background: var(--hud-panel-bg);
+            border: 1px solid var(--hud-border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--hud-glow);
+            position: relative;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px;
+            width: 8px; height: 8px;
+            border-top: 2px solid var(--cyan-glow);
+            border-left: 2px solid var(--cyan-glow);
+            border-top-left-radius: 4px;
+        }
+
+        .summary-card p{
+            margin: 0 0 4px;
+            font-size: 12px;
+            color: var(--ink-dim);
+            font-weight: 600;
+        }
+
+        .summary-card h3{
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--ink-bright);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.25);
+        }
+
+        .summary-icon{
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 243, 255, 0.05);
+            border: 1.5px solid var(--hud-border);
+        }
+
+        /* ---- רשימת תלמידים ---- */
+        .list-heading{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .list-heading h2{
+            font-family: 'Rubik', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0;
+            color: var(--ink-bright);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.25);
+        }
+
+        #students-grid{
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* כרטיסיית סטודנטית מעוצבת כפאנל HUD טקטי */
+        .student-card{
+            background: var(--hud-panel-bg);
+            border: 1.5px solid var(--hud-border);
+            border-radius: 20px;
+            padding: 24px;
+            position: relative;
+            box-shadow: var(--hud-glow);
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+            animation: card-appear 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+        }
+
+        .student-card:hover{
+            transform: translateY(-4px);
+        }
+
+        @keyframes card-appear{
+            from { opacity: 0; transform: translateY(12px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .student-top{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .student-name{
+            font-family: 'Heebo', sans-serif;
+            font-weight: 700;
+            font-size: 17px;
+            margin: 0 0 6px;
+            color: var(--ink-bright);
+        }
+
+        .student-badge{
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: color 0.3s ease, background 0.3s ease;
+        }
+
+        /* טבעת ריכוז הולוגרפית מעוצבת כחוגת מכ"ם */
+        .ring{
+            --pct: 0;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: conic-gradient(var(--ring-color) calc(var(--pct)*1%), rgba(255, 255, 255, 0.03) 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: --pct 0.5s ease;
+            filter: drop-shadow(0 0 6px var(--ring-color));
+            border: 2px dashed rgba(255, 255, 255, 0.05);
+        }
+
+        .ring-inner{
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #050A1F;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 14px;
+            color: var(--ring-color);
+        }
+
+        .last-seen{
+            font-size: 11px;
+            color: var(--ink-dim);
+            text-align: left;
+            direction: ltr;
+            margin-top: 12px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ---- מצב ריק ---- */
+        .empty-state{
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 80px 20px;
+            border: 2px dashed rgba(0, 243, 255, 0.15);
+            border-radius: 24px;
+            background: var(--hud-panel-bg);
+            box-shadow: var(--hud-glow);
+        }
+
+        .empty-icon{
+            font-size: 40px;
+            margin-bottom: 16px;
+            animation: pulse-ring 2.5s infinite;
+        }
+
+        .empty-state p{
+            color: var(--ink-dim);
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud-grid"></div>
+
+    <header>
+        <div class="wrap">
+            <div class="brand">
+                <span class="brand-icon">🎓</span>
+                <h1>FocusClass<span>ממשק מרצה HUD</span></h1>
+            </div>
+            <div class="live-status">
+                <span class="live-dot"></span>
+                תקשורת אקטיבית פעילה
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- פאנל בקרה הולוגרפי חצוי -->
+        <section class="telemetry-layout">
+            <!-- מדד הריכוז ומסך האק"ג הכהה -->
+            <div class="pulse-hero" id="hero-card">
+                <div class="pulse-hero-info">
+                    <p class="pulse-eyebrow">מדד ריכוז הולוגרפי</p>
+                    <div class="hud-average-dial" id="average-dial">
+                        <div class="hud-average-dial-inner">
+                            <div id="class-average">0</div>
+                            <span>ריכוז כיתתי</span>
+                        </div>
+                    </div>
+                    <div id="class-status">ממתין לנתונים...</div>
+                </div>
+                <div class="wave-box">
+                    <canvas id="ecg-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- יומן התרעות מערכת טקטי -->
+            <div class="hud-card">
+                <div class="hud-card-header">📡 לוג התרעות קוגניטיבי</div>
+                <div class="log-container" id="log-box">
+                    <div class="log-row">> אתחול מערכת... תקין</div>
+                    <div class="log-row">> מאזין לחיבורי סטודנטיות...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- כרטיסיות מידע מהיר -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div>
+                    <p>סטודנטיות מחוברות</p>
+                    <h3 id="active-count">0</h3>
+                </div>
+                <div class="summary-icon">👥</div>
+            </div>
+            <div class="summary-card">
+                <div>
+                    <p>ציון שיא נוכחי</p>
+                    <h3 id="top-score">–</h3>
+                </div>
+                <div class="summary-icon">🏆</div>
+            </div>
+            <div class="summary-card">
+                <div>
+                    <p>קשר אחרון לשרת</p>
+                    <h3 id="last-update" style="font-size:16px;">–</h3>
+                </div>
+                <div class="summary-icon">⏱️</div>
+            </div>
+        </div>
+
+        <div class="list-heading">
+            <h2>מדדי הריכוז של הסטודנטיות</h2>
+            <span class="refresh-chip">מתעדכן כל שנייה</span>
+        </div>
+
+        <div id="students-grid">
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">📡</div>
+                <p>ממתין לקבלת שידורי ריכוז מהאפליקציות של הסטודנטיות...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const cardElements = {};
+        const grid = document.getElementById('students-grid');
+        const emptyState = document.getElementById('empty-state');
+        const heroCard = document.getElementById('hero-card');
+        const averageDial = document.getElementById('average-dial');
+        const classAverageEl = document.getElementById('class-average');
+        const classStatusEl = document.getElementById('class-status');
+        const logBox = document.getElementById('log-box');
+
+        // אתחול מנגנון קנבס אק"ג
+        const canvas = document.getElementById('ecg-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = canvas.width = canvas.offsetWidth;
+        let height = canvas.height = canvas.offsetHeight;
+        
+        // התמודדות עם שינויי גודל חלון
+        window.addEventListener('resize', () => {
+            width = canvas.width = canvas.offsetWidth;
+            height = canvas.height = canvas.offsetHeight;
+        });
+
+        // יצירת חוצץ נקודות אק"ג
+        let ecgPoints = Array(width).fill(height / 2);
+        let ecgCycleIndex = 0;
+        let currentClassAverage = 0;
+
+        function bandInfo(score){
+            if (score >= 80) {
+                return { color: 'var(--cyan-glow)', soft: 'var(--high-bg)', label: 'למידה פעילה ומרוכזת', glow: 'var(--high-glow-color)' };
+            } else if (score >= 50) {
+                return { color: 'var(--gold-glow)', soft: 'var(--mid-bg)', label: 'איבוד ריכוז חלקי', glow: 'var(--mid-glow-color)' };
+            }
+            return { color: 'var(--magenta-glow)', soft: 'var(--low-bg)', label: 'עייפות או מוסחות', glow: 'var(--low-glow-color)' };
+        }
+
+        // מחולל פעימות אק"ג המגיב דינמית לציון
+        function getNextECGPoint(score) {
+            let baseline = height / 2;
+            if (score <= 10) {
+                // קו אק"ג "שטוח" עם רעש קל במקרה של חוסר ריכוז קיצוני או שינה
+                return baseline + (Math.random() - 0.5) * 1.8;
+            }
+
+            // קצב פעימות לב משתנה לפי ציון הריכוז (גבוה = בריא ומהיר, נמוך = איטי מאוד)
+            let cycleLength = score >= 80 ? 60 : score >= 50 ? 90 : 130;
+            let idx = ecgCycleIndex % cycleLength;
+            ecgCycleIndex++;
+
+            // צורת גל אק"ג דיאגנוסטית אמיתית
+            if (idx === 10) return baseline - 4; // גל P
+            if (idx === 11) return baseline - 8;
+            if (idx === 12) return baseline - 4;
+            
+            if (idx === 15) return baseline + 6;  // ירידת Q
+            if (idx === 17) return baseline - 50; // שפיץ R (ניאון צר)
+            if (idx === 19) return baseline + 58; // ירידת S עמוקה
+            if (idx === 21) return baseline - 6;
+            
+            if (idx === 26) return baseline - 10; // גל T רחב
+            if (idx === 28) return baseline - 16;
+            if (idx === 30) return baseline - 10;
+
+            return baseline;
+        }
+
+        // לולאת הציור של האק"ג - 60 פריימים בשנייה על רקע שחור זוהר
+        function drawECG() {
+            // רקע שחור מוחלט ומבריק
+            ctx.fillStyle = '#02040A';
+            ctx.fillRect(0, 0, width, height);
+
+            // 1. ציור הגריד הדיגיטלי בצבע כחול חצי-שקוף
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.05)';
+            ctx.lineWidth = 1;
+            
+            // קווים אנכיים
+            for (let x = 0; x < width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            // קווים אופקיים
+            for (let y = 0; y < height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // 2. הזזת מערך הנקודות שמאלה
+            ecgPoints.shift();
+            ecgPoints.push(getNextECGPoint(currentClassAverage));
+
+            // 3. שרטוט קו הניאון הבוהק
+            const band = bandInfo(currentClassAverage);
+            ctx.strokeStyle = currentClassAverage === 0 ? 'rgba(255, 255, 255, 0.15)' : band.color;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // אפקט פליטת אור קוונטי (Glow)
+            ctx.shadowBlur = currentClassAverage === 0 ? 0 : 15;
+            ctx.shadowColor = band.color;
+
+            ctx.beginPath();
+            ctx.moveTo(0, ecgPoints[0]);
+            for (let i = 1; i < width; i++) {
+                ctx.lineTo(i, ecgPoints[i]);
+            }
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0; // איפוס אפקט הצל כדי לא להכביד
+
+            requestAnimationFrame(drawECG);
+        }
+
+        // הוספת שורת התרעה ליומן
+        function addLog(message) {
+            const timeStr = new Date().toLocaleTimeString('he-IL');
+            const row = document.createElement('div');
+            row.className = 'log-row';
+            row.innerText = `> [${timeStr}] ${message}`;
+            logBox.appendChild(row);
+            
+            // גלילה אוטומטית למטה
+            if (logBox.children.length > 6) {
+                logBox.removeChild(logBox.children[0]);
+            }
+        }
+
+        function makeCard(name){
+            const el = document.createElement('div');
+            el.className = 'student-card';
+            el.innerHTML = `
+                <div class="student-top">
+                    <div>
+                        <h4 class="student-name">${name}</h4>
+                        <span class="student-badge" data-role="badge"></span>
+                    </div>
+                    <div class="ring" data-role="ring">
+                        <div class="ring-inner" data-role="ring-text">0%</div>
+                    </div>
+                </div>
+                <div class="last-seen" data-role="last-seen">SIGNAL: ONLINE // SECURE</div>
+            `;
+            grid.appendChild(el);
+            addLog(`חיבור חדש נקלט: הסטודנטית ${name} התחברה`);
+            return el;
+        }
+
+        function updateCard(el, name, score, prevScore){
+            const band = bandInfo(score);
+            el.querySelector('[data-role="badge"]').textContent = band.label;
+            el.querySelector('[data-role="badge"]').style.color = band.color;
+            el.querySelector('[data-role="badge"]').style.background = band.soft;
+
+            const ring = el.querySelector('[data-role="ring"]');
+            ring.style.setProperty('--pct', score);
+            ring.style.setProperty('--ring-color', band.color);
+            
+            el.querySelector('[data-role="ring-text"]').textContent = score + '%';
+            el.querySelector('[data-role="ring-text"]').style.color = band.color;
+            
+            // שוליים ופינות זוהרים
+            el.style.borderColor = band.color;
+            el.style.boxShadow = `0 10px 25px -10px ${band.glow}`;
+
+            // הוספת התרעה ללוג במקרה של שינוי סטטוס משמעותי
+            if (prevScore !== undefined && Math.abs(prevScore - score) >= 20) {
+                if (score < 50) {
+                    addLog(`התרעה: ירידה חדה בריכוז של ${name} (${score}%)`);
+                } else if (score >= 80) {
+                    addLog(`עדכון: ${name} חזרה לריכוז גבוה (${score}%)`);
+                }
+            }
+        }
+
+        async function fetchAndUpdateDashboard() {
+            try {
+                const response = await fetch('/api/v1/scores');
+                const students = await response.json();
+                const names = Object.keys(students);
+
+                document.getElementById('active-count').innerText = names.length;
+                document.getElementById('last-update').innerText = new Date().toLocaleTimeString('he-IL');
+
+                // הסרת כרטיסיות של סטודנטיות שהתנתקו
+                Object.keys(cardElements).forEach(name => {
+                    if (!students[name]) {
+                        const el = cardElements[name];
+                        el.style.opacity = '0';
+                        el.style.transform = 'translateY(8px)';
+                        setTimeout(() => el.remove(), 250);
+                        delete cardElements[name];
+                        addLog(`החיבור עם הסטודנטית ${name} הופסק`);
+                    }
+                });
+
+                if (names.length === 0) {
+                    emptyState.style.display = '';
+                    classAverageEl.innerText = '0';
+                    currentClassAverage = 0;
+                    averageDial.style.setProperty('--avg-pct', 0);
+                    classStatusEl.innerText = 'ממתין לחיבור סטודנטיות...';
+                    classStatusEl.style.color = 'var(--ink-dim)';
+                    heroCard.style.borderColor = 'var(--panel-border)';
+                    heroCard.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.4)';
+                    return;
+                }
+                emptyState.style.display = 'none';
+
+                let topScore = -1;
+                let totalScore = 0;
+
+                names.forEach(name => {
+                    const score = Math.round(students[name].score);
+                    totalScore += score;
+                    if (score > topScore) topScore = score;
+
+                    const prevScore = cardElements[name] ? parseInt(cardElements[name].querySelector('[data-role="ring-text"]').textContent) : undefined;
+
+                    if (!cardElements[name]) {
+                        cardElements[name] = makeCard(name);
+                    }
+                    updateCard(cardElements[name], name, score, prevScore);
+                });
+
+                document.getElementById('top-score').innerText = topScore + '%';
+
+                const average = Math.round(totalScore / names.length);
+                classAverageEl.innerText = average;
+                currentClassAverage = average; // מעביר את הממוצע ללולאת האק"ג
+                
+                // עדכון חוגת המכ"ם המעגלית
+                averageDial.style.setProperty('--avg-pct', average);
+                
+                const heroBand = bandInfo(average);
+                heroCard.style.borderColor = heroBand.color;
+                heroCard.style.boxShadow = `0 24px 50px -15px ${heroBand.glow}`;
+                averageDial.style.setProperty('--hero-color', heroBand.color);
+                averageDial.style.setProperty('--hero-glow', heroBand.glow);
+
+                if (average >= 80) {
+                    classStatusEl.innerText = ' הריכוז הכיתתי גבוה ויציב';
+                    classStatusEl.style.color = heroBand.color;
+                } else if (average >= 50) {
+                    classStatusEl.innerText = ' הכיתה מראה סימני איבוד ריכוז קלים';
+                    classStatusEl.style.color = heroBand.color;
+                } else {
+                    classStatusEl.innerText = ' ריכוז נמוך, מומלץ לבצע הפעלת רענון';
+                    classStatusEl.style.color = heroBand.color;
+                }
+
+            } catch (error) {
+                console.error('שגיאה במשיכת נתונים מהשרת:', error);
+            }
+        }
+
+        // הפעלת לולאת הציור של האק"ג בקנבס
+        drawECG();
+
+        fetchAndUpdateDashboard();
+        setInterval(fetchAndUpdateDashboard, 1000);
+    </script>
+</body>
+</html>

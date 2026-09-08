@@ -1,0 +1,15 @@
+opencv-python==4.10.0.84
+numpy<2
+requests==2.32.3
+pyvirtualcam==0.11.1
+python-dotenv==1.0.1
+
+# תלויות אמיתיות של mediapipe בזמן ריצה (mediapipe עצמו מותקן בנפרד -
+# ראו requirements-mediapipe.txt + README). גרסת protobuf תלויה בגרסת
+# מדיהפייפ שתותקן, שתלויה בגרסת פייתון (ראו הערה שם).
+matplotlib>=3.5
+absl-py>=1.0.0
+attrs>=19.1.0
+flatbuffers>=2.0
+protobuf>=3.11,<4 ; python_version < "3.9"
+protobuf>=4.25.3,<5 ; python_version >= "3.9"
